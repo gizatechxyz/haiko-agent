@@ -4,3 +4,30 @@ version = 1
 [[package]]
 name = "haiko_agent"
 version = "0.1.0"
+dependencies = [
+ "orion_algo",
+ "orion_data_structures",
+ "orion_numbers",
+]
+
+[[package]]
+name = "orion_algo"
+version = "0.1.0"
+source = "git+https://github.com/gizatechxyz/orion.git?branch=cleaning#9a2db04a8f9b3ca29add278909adf239d78f6ff4"
+dependencies = [
+ "orion_data_structures",
+ "orion_numbers",
+]
+
+[[package]]
+name = "orion_data_structures"
+version = "0.1.0"
+source = "git+https://github.com/gizatechxyz/orion.git?branch=cleaning#9a2db04a8f9b3ca29add278909adf239d78f6ff4"
+dependencies = [
+ "orion_numbers",
+]
+
+[[package]]
+name = "orion_numbers"
+version = "0.1.0"
+source = "git+https://github.com/gizatechxyz/orion.git?branch=cleaning#9a2db04a8f9b3ca29add278909adf239d78f6ff4"

@@ -1,4 +1,4 @@
-mod oracle;
+mod trend;
 
 
 // Main entry point of the program.
