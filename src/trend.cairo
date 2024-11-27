@@ -66,3 +66,87 @@ fn sse(mut arr: Span<F64>) -> F64 {
 
     err
 }
+
+/// Minimises the sum of squared differences between the fitted line and the data
+/// with gradient descent.
+///
+/// Parameters
+/// ----------
+/// support : bool
+///     Whether trend line is support (lower) or resistance (upper) trend
+/// pivot : usize
+///     Pivot point index
+/// init_slope : F64
+///     Initial slope value of trendline to optimise
+/// y : Span<F64>
+///     Array of prices
+fn optimise_slope(support: bool, pivot: usize, init_slope: F64, y: Span<F64>) -> (F64, F64) {
+    // Amount to change slope by for each iteration.
+    let slope_unit = (y.max() - y.min()) / F64Impl::new_unscaled(y.len().into());
+
+    // Optimisation parameters
+    // `opt_step` will decrease toward `min_step` as the optimisation progresses.
+    // TODO: Conduct sensitivity analysis to find optimal values.
+    let opt_step = F64Impl::ONE(); // Starting step size.
+    let min_step = F64 { d: 429497 }; // Minimum step size 0.0001.
+    let mut curr_step = opt_step; // Current step size
+
+    // Initiate at the slope of the line of best fit and find the error, which will
+    // be minimised by comparison to residual errors from alternative slopes.
+    let mut best_slope = init_slope;
+    let mut best_err = check_trend_line(support, pivot, init_slope, y);
+    assert(best_err >= F64Impl::ZERO(), 'best error <= 0');
+
+    // Run gradient descent by numerical differentiation. To find the direction of
+    // change, we increase the slope by a very small amount and see if the error
+    // increases or decreases. This informs the direction of change in slope.
+    let mut get_derivative = true;
+    let mut derivative: F64 = F64Impl::ZERO();
+
+    while curr_step > min_step {
+        // Find derivative and direction of change.
+        if get_derivative {
+            // Change slope by small amount (`min_step`) and compare errors to existing
+            // slope to find derivative and direction of change.
+            let mut slope_change = best_slope + (slope_unit * min_step);
+            let mut test_err = check_trend_line(support, pivot, slope_change, y);
+            derivative = test_err - best_err;
+
+            // If increasing by a small amount fails, try decreasing by a small amount.
+            // This is the same computation as above, but with an inverse sign.
+            if test_err < F64Impl::ZERO() {
+                slope_change = best_slope - slope_unit * min_step;
+                test_err = check_trend_line(support, pivot, slope_change, y);
+                derivative = best_err - test_err;
+            }
+
+            // Derivative failed, give up and panic.
+            assert(test_err > F64Impl::ZERO(), 'Derivative failed.');
+
+            // Direction found. We set `get_derivative` to `False` to start the optimisation.
+            get_derivative = false;
+        }
+
+        // Increase or decrease slope based on derivative.
+        let test_slope = if derivative > F64Impl::ZERO() {
+            best_slope - (slope_unit * curr_step)
+        } else {
+            best_slope + (slope_unit * curr_step)
+        };
+
+        // Check impact on error.
+        // If the new slope value created invalid trendline or did not reduce the error
+        // in the data, we reduce the step size and try again. Otherwise, we update the
+        // best slope and error and find the next derivative.
+        let test_err = check_trend_line(support, pivot, test_slope, y);
+        if (test_err < F64Impl::ZERO()) || (test_err >= best_err) {
+            curr_step *= F64Impl::HALF();
+        } else {
+            best_err = test_err;
+            best_slope = test_slope;
+            get_derivative = true // Recompute derivative
+        }
+    };
+
+    return (best_slope, (-best_slope * pivot.into()) + *y[pivot]);
+}
