@@ -1,0 +1,7 @@
+
+syntax = "proto3";
+
+package oracle;
+
+// Uncomment the line below to import definitions from Orion, if needed.
+// import "orion.proto";
