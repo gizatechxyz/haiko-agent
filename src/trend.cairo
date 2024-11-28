@@ -150,3 +150,110 @@ fn optimise_slope(support: bool, pivot: usize, init_slope: F64, y: Span<F64>) ->
 
     return (best_slope, (-best_slope * pivot.into()) + *y[pivot]);
 }
+
+/// Fits trendlines over array of close prices.
+///
+/// This model tends to better control for outliers, as it ignores the candlestick extremes.
+///
+/// Parameters
+/// ----------
+/// data : Span<F64>
+///     Array of closing prices
+///
+fn fit_trendlines_single(mut data: Span<F64>) -> ((F64, F64), (F64, F64)) {
+    // Find line of best fit (slope and intercept) over close prices with OLS estimator.
+    //   coefs[0] = slope, coefs[1] = intercept
+    let mut x: Span<F64> = SpanMathTrait::arange(data.len());
+
+    let (coef_a, coef_b) = linear_fit(x, data);
+
+    // Get predicted line of fit.
+    let mut line_points: Array<F64> = array![];
+    loop {
+        match x.pop_front() {
+            Option::Some(x_ele) => { line_points.append((coef_a * *x_ele) + coef_b) },
+            Option::None => { break; },
+        }
+    };
+
+    // Find upper and lower pivot points.
+    // These are the points where the delta between the data and the line of
+    // best fit are maximised / minimised.
+    let mut upper_pivot: usize = 0;
+    let mut lower_pivot: usize = 0;
+    let mut i: usize = 0;
+    let mut upper_delta = F64Impl::MIN();
+    let mut lower_delta = F64Impl::MAX();
+    let data_copy = data;
+    loop {
+        match data.pop_front() {
+            Option::Some(data_ele) => {
+                let delta = *data_ele - line_points.pop_front().unwrap();
+
+                if delta > upper_delta {
+                    upper_delta = delta;
+                    upper_pivot = i;
+                }
+
+                if delta < lower_delta {
+                    lower_delta = delta;
+                    lower_pivot = i;
+                }
+
+                i += 1;
+            },
+            Option::None => { break; },
+        }
+    };
+
+    // Optimise the slope for support and resistance trend lines.
+    let support_coefs = optimise_slope(true, lower_pivot, coef_a, data_copy);
+    let resist_coefs = optimise_slope(false, upper_pivot, coef_a, data_copy);
+
+    return (support_coefs, resist_coefs);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{check_trend_line, optimise_slope, fit_trendlines_single, F64};
+    use orion_numbers::f64::helpers::{assert_precise, assert_relative};
+
+    #[test]
+    fn fit_trendlines_single_test() {
+        let data = array![
+            F64 { d: 34307864436 }, //7.987922159023583
+            F64 { d: 34317942637 },
+            F64 { d: 34967382307 },
+            F64 { d: 34717645274 },
+            F64 { d: 35085779617 },
+            F64 { d: 35040253046 },
+            F64 { d: 35030342691 },
+            F64 { d: 35532887880 },
+            F64 { d: 35545139375 },
+            F64 { d: 35568048422 },
+            F64 { d: 35811476431 },
+            F64 { d: 35432070807 },
+            F64 { d: 35310094099 },
+            F64 { d: 35708260430 },
+        ]
+            .span();
+
+        let slope_support_expected = 90192756;
+        let slope_resist_expected = 109242249;
+
+        let ((slope_support_actual, _), (slope_resist_actual, _)) = fit_trendlines_single(data);
+        assert_relative(
+            slope_support_actual,
+            slope_support_expected,
+            'best_slopes should be equal',
+            Option::Some(429496730)
+        );
+        
+        assert_relative(
+            slope_resist_actual,
+            slope_resist_expected,
+            'best_slopes should be equal',
+            Option::Some(429496730)
+        );
+    }
+}

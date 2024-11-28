@@ -10,6 +10,9 @@ orion_numbers = { git = "https://github.com/gizatechxyz/orion.git", branch = "cl
 orion_data_structures = { git = "https://github.com/gizatechxyz/orion.git", branch = "cleaning" }
 orion_algo = { git = "https://github.com/gizatechxyz/orion.git", branch = "cleaning" }
 
+[dev-dependencies]
+cairo_test = "2.7.0"
+
 [tool.agent]
 definitions = "proto/oracle.proto"  # required
 # cairo_output = "src"
