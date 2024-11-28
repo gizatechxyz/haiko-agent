@@ -160,7 +160,7 @@ fn optimise_slope(support: bool, pivot: usize, init_slope: F64, y: Span<F64>) ->
 /// data : Span<F64>
 ///     Array of closing prices
 ///
-fn fit_trendlines_single(mut data: Span<F64>) -> ((F64, F64), (F64, F64)) {
+pub(crate) fn fit_trendlines_single(mut data: Span<F64>) -> ((F64, F64), (F64, F64)) {
     // Find line of best fit (slope and intercept) over close prices with OLS estimator.
     //   coefs[0] = slope, coefs[1] = intercept
     let mut x: Span<F64> = SpanMathTrait::arange(data.len());
@@ -215,7 +215,7 @@ fn fit_trendlines_single(mut data: Span<F64>) -> ((F64, F64), (F64, F64)) {
 
 #[cfg(test)]
 mod tests {
-    use super::{check_trend_line, optimise_slope, fit_trendlines_single, F64};
+    use super::{fit_trendlines_single, F64};
     use orion_numbers::f64::helpers::{assert_precise, assert_relative};
 
     #[test]
@@ -248,7 +248,7 @@ mod tests {
             'best_slopes should be equal',
             Option::Some(429496730)
         );
-        
+
         assert_relative(
             slope_resist_actual,
             slope_resist_expected,
