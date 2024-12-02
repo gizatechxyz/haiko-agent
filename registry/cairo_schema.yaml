@@ -1,0 +1,17 @@
+schemas:
+  CairoRequest:
+    fields:
+      - prices:
+          type: Span
+          item_type:
+            type: Primitive
+            name: F64
+  CairoResult:
+    fields:
+      - trend:
+          type: Span
+          item_type:
+            type: Primitive
+            name: i64
+cairo_input: CairoRequest
+cairo_output: CairoResult

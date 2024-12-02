@@ -3,7 +3,7 @@ kind: Service
 metadata:
   annotations:
     run.googleapis.com/launch-stage: ALPHA
-  name: haiko_agent-api
+  name: haiko-agent
 spec:
   template:
     metadata:
@@ -12,7 +12,7 @@ spec:
         run.googleapis.com/container-dependencies: '{"agent-runner":["python-server"]}'
     spec:
       containers:
-        - image: "europe-west1-docker.pkg.dev/giza-platform-common/platform-images/orion-runner:0.2.6preb44771"
+        - image: "europe-west1-docker.pkg.dev/giza-platform-common/platform-images/orion-runner:0.3.2pra4395e2"
           name: agent-runner
           ports:
             - containerPort: 8080
@@ -20,7 +20,9 @@ spec:
             - name: REGISTRY_URL
               value: "%REGISTRY_PATH%"
             - name: PREPROCESS_URL
-              value: "http://localhost:3000/preprocess"
+              value: "http://localhost:8888/preprocess"
+            - name: POSTPROCESS_URL
+              value: http://localhost:8888/postprocess
           resources:
             limits:
               cpu: 1000m

@@ -7,6 +7,9 @@ COPY ./python/requirements.txt requirements.txt
 RUN pip install --no-cache-dir uv
 RUN uv pip install --system --no-cache-dir --upgrade -r requirements.txt
 
-COPY ./python/src ./
+RUN mkdir -p /opt/app/src
+COPY ./python/src /opt/app/src/
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8888"]
+ENV PYTHONPATH=/opt/app
+
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8888"]
