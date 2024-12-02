@@ -1,6 +1,6 @@
 use orion_numbers::{F64, F64Impl};
 
-#[derive(Drop, Copy, PartialEq)]
+#[derive(Drop, Copy, PartialEq, Serde, Debug)]
 pub enum Trend {
     Uptrend,
     Downtrend,
