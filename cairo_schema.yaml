@@ -8,7 +8,7 @@ schemas:
             name: F64
   CairoResult:
     fields:
-      - trends:
+      - trend:
           type: Span
           item_type:
             type: Primitive

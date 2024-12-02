@@ -1,9 +1,7 @@
 mod trend;
 mod classification;
-mod data;
 
 use orion_numbers::F64;
-use data::get_data;
 use trend::fit_trendlines_single;
 use classification::{trend_classification, Trend};
 

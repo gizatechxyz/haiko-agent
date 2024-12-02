@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import json
@@ -9,6 +10,11 @@ app = FastAPI()
 
 class RunInput(BaseModel):
     days: int
+
+
+class CairoRunResult(BaseModel):
+    result: str
+    request_id: Optional[str] = None
 
 
 def fetch_eth_prices(days: int):
@@ -48,13 +54,10 @@ async def preprocess(request: RunInput):
 
         eth_usdc_prices = []
         for price_point in prices:
-            timestamp, price_usd = price_point
-            time = datetime.utcfromtimestamp(timestamp / 1000).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
+            _, price_usd = price_point
             price_usdc = price_usd
             eth_usdc_prices.append(price_usdc)
-        
+
         return {"args": json.dumps({"prices": eth_usdc_prices})}
     except HTTPException as e:
         raise e
@@ -66,15 +69,29 @@ async def preprocess(request: RunInput):
 # This endpoint handles postprocessing of data after a Cairo program execution.
 # It allows further manipulation or interpretation of the Cairo output.
 @app.post("/postprocess")
-async def postprocess(request: Request):
+async def postprocess(request: CairoRunResult):
     """
     Receives JSON data as the output of a Cairo main function, processes it,
     and returns the modified result.
     """
-    data = await request.json()
+    data = json.loads(request.result)
+
+    print("Cairo res: ", data)
+
     # Insert custom postprocessing logic here
-    processed_data = {"processed": data}
+    processed_data = {"trend": trend_num_to_string(data["trend"][0])}
     return processed_data
+
+
+def trend_num_to_string(num: int):
+    if num == 0:
+        return "Up"
+    elif num == 1:
+        return "Down"
+    elif num == 2:
+        return "Neutral"
+    else:
+        raise ValueError("Unknown trend value")
 
 
 if __name__ == "__main__":
