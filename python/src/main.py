@@ -78,8 +78,8 @@ async def postprocess(request: CairoRunResult):
 
     # Insert custom postprocessing logic here
     processed_data = {"trend": trend_num_to_string(data["trend"][0])}
-    return processed_data
 
+    return json.dumps({"results": processed_data, "request_id": request.request_id})
 
 def trend_num_to_string(num: int):
     if num == 0:

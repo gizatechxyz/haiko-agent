@@ -64,6 +64,8 @@ steps:
         "run-service.yaml",
         "--region",
         "europe-west1",
+        "--project",
+        "giza-platform"
       ]
     id: DEPLOY_MULTICONTAINER
     waitFor:
