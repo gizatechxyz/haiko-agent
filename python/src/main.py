@@ -1,10 +1,33 @@
-
-import math
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import json
+import requests
+from datetime import datetime
 
 app = FastAPI()
+
+
+class RunInput(BaseModel):
+    days: int
+
+
+def fetch_eth_prices(days: int):
+    url = "https://api.coingecko.com/api/v3/coins/ethereum/market_chart"
+    params = {"vs_currency": "usd", "days": days}
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        if "prices" not in data:
+            raise ValueError("The 'prices' key is missing in the API response.")
+        return data["prices"]
+    except requests.RequestException as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching ETH prices: {str(e)}"
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=500, detail=str(ve))
+
 
 @app.get("/healthcheck")
 def read_root():
@@ -14,19 +37,30 @@ def read_root():
     """
     return {"status": "OK"}
 
+
 # ========== Preprocessing ==========
 # This endpoint handles preprocessing of data before executing a Cairo program.
 # It formats and prepares the input data, making it ready for the Cairo main function.
 @app.post("/preprocess")
-async def preprocess(request: Request):
-    """
-    Receives JSON data, processes it, and returns the modified data
-    as arguments for a Cairo main function.
-    """
-    data = await request.json()
-    # Insert custom preprocessing logic here
-    processed_data = {"n": data["n"]}
-    return {"args": json.dumps(processed_data)}
+async def preprocess(request: RunInput):
+    try:
+        prices = fetch_eth_prices(days=request.days)
+
+        eth_usdc_prices = []
+        for price_point in prices:
+            timestamp, price_usd = price_point
+            time = datetime.utcfromtimestamp(timestamp / 1000).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+            price_usdc = price_usd
+            eth_usdc_prices.append(price_usdc)
+        
+        return {"args": json.dumps({"prices": eth_usdc_prices})}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
 
 # ========== Postprocessing ==========
 # This endpoint handles postprocessing of data after a Cairo program execution.
@@ -41,6 +75,7 @@ async def postprocess(request: Request):
     # Insert custom postprocessing logic here
     processed_data = {"processed": data}
     return processed_data
+
 
 if __name__ == "__main__":
     import uvicorn

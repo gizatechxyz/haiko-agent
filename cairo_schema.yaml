@@ -1,15 +1,17 @@
-
 schemas:
-    Input:
-        fields:
-            n: 
-                type: Primitive
-                name: i64
-    Output:
-        fields:
-            n:
-                type: Primitive
-                name: i64
-cairo_input: Input
-cairo_output: Output
-    
+  CairoRequest:
+    fields:
+      - prices:
+          type: Span
+          item_type:
+            type: Primitive
+            name: F64
+  CairoResult:
+    fields:
+      - trends:
+          type: Span
+          item_type:
+            type: Primitive
+            name: i64
+cairo_input: CairoRequest
+cairo_output: CairoResult
