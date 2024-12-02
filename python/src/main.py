@@ -76,8 +76,6 @@ async def postprocess(request: CairoRunResult):
     """
     data = json.loads(request.result)
 
-    print("Cairo res: ", data)
-
     # Insert custom postprocessing logic here
     processed_data = {"trend": trend_num_to_string(data["trend"][0])}
     return processed_data
