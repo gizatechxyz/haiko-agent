@@ -1,9 +1,18 @@
+mod volatility;
 mod trend;
 mod classification;
 
 use orion_numbers::F64;
 use trend::fit_trendlines_single;
 use classification::{trend_classification, Trend};
+use volatility::calculate_volatility;
+
+#[derive(Drop, Serde)]
+struct MarketAnalysis {
+    trend: Trend,
+    standard_volatility: F64,
+    log_volatility: F64
+}
 
 fn serializer<T, +Serde<T>, +Drop<T>>(data: T) -> Array<felt252> {
     let mut output_array = array![];
@@ -23,9 +32,10 @@ fn main(request: Array<felt252>) -> Array<felt252> {
     serializer(result)
 }
 
-fn logic(data: Span<F64>) -> Span<Trend> {
+fn logic(data: Span<F64>) -> MarketAnalysis {
     let lookback = 14;
 
+    // Calculate trend
     let mut support_slopes = array![];
     let mut resist_slopes = array![];
 
@@ -41,5 +51,11 @@ fn logic(data: Span<F64>) -> Span<Trend> {
         i += 1;
     };
 
-    trend_classification(support_slopes.span(), resist_slopes.span())
+    let trends = trend_classification(support_slopes.span(), resist_slopes.span());
+
+    // Calculate volatilities
+    let standard_vol = calculate_volatility(data, false);
+    let log_vol = calculate_volatility(data, true);
+
+    MarketAnalysis { trend: *trends[0], standard_volatility: standard_vol, log_volatility: log_vol }
 }

@@ -74,12 +74,19 @@ async def postprocess(request: CairoRunResult):
     Receives JSON data as the output of a Cairo main function, processes it,
     and returns the modified result.
     """
-    data = json.loads(request.result)
+    analysis = json.loads(request.result)["analysis"]
 
     # Insert custom postprocessing logic here
-    processed_data = {"trend": trend_num_to_string(data["trend"][0])}
+    analysis = {
+        "trend": trend_num_to_string(analysis["trend"]),
+        "volatility": {
+            "standard": analysis["standard_volatility"],
+            "logarithmic": analysis["log_volatility"],
+        },
+    }
 
-    return json.dumps({"results": processed_data, "request_id": request.request_id})
+    return json.dumps({"results": analysis, "request_id": request.request_id})
+
 
 def trend_num_to_string(num: int):
     if num == 0:
