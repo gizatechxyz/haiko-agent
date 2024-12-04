@@ -35,12 +35,12 @@ fn main(request: Array<felt252>) -> Array<felt252> {
 fn logic(data: Span<F64>) -> MarketAnalysis {
     let lookback = 14;
 
-    // Calculate trend
     let mut support_slopes = array![];
     let mut resist_slopes = array![];
 
     let mut i = lookback - 1;
-    while i < lookback {
+
+    while i < data.len() {
         let ((support_coef, _), (resist_coef, _)) = fit_trendlines_single(
             data.slice(i + 1 - lookback, lookback)
         );
@@ -57,5 +57,9 @@ fn logic(data: Span<F64>) -> MarketAnalysis {
     let standard_vol = calculate_volatility(data, false);
     let log_vol = calculate_volatility(data, true);
 
-    MarketAnalysis { trend: *trends[0], standard_volatility: standard_vol, log_volatility: log_vol }
+    MarketAnalysis {
+        trend: *trends[0], // Taking the most recent trend
+        standard_volatility: standard_vol,
+        log_volatility: log_vol
+    }
 }
