@@ -6,6 +6,9 @@ schemas:
           item_type:
             type: Primitive
             name: F64
+      - lookback:
+          type: Primitive
+          name: u32
   CairoResult:
     fields:
       - analysis:
@@ -16,11 +19,8 @@ schemas:
       - trend:
           type: Primitive
           name: i64
-      - standard_volatility:
+      - vol_limit:
           type: Primitive
-          name: F64
-      - log_volatility:
-          type: Primitive
-          name: F64
+          name: u32
 cairo_input: CairoRequest
 cairo_output: CairoResult

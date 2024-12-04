@@ -1,5 +1,18 @@
 use orion_numbers::{F64, F64Impl};
 
+// Constants
+const LOG_BASE: F64 = F64 { d: 42949 }; // ln(1.00001)
+const SHIFT_AMOUNT: F64 = F64 { d: 33958695796736000 }; // 7_906_625;
+
+// Function to convert standard volatility to limit
+// limit = rounddown(log(1+vol)/log(1.00001)) + 7906625
+pub(crate) fn volatility_to_limit(vol: F64) -> u32 {
+    // Calculate the ratio
+    let limit = (((F64Impl::ONE() + vol).ln() / LOG_BASE).floor()) + SHIFT_AMOUNT;
+
+    limit.try_into().unwrap()
+}
+
 // https://quant.stackexchange.com/questions/60453/what-is-the-difference-between-log-volatility-and-simple-volatility-in-a-gbm
 // Based on this Numpy implementation:
 // returns_std = np.diff(prices) / prices[:-1]

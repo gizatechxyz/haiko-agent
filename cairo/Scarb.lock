@@ -3,7 +3,7 @@ version = 1
 
 [[package]]
 name = "haiko_agent"
-version = "0.1.2"
+version = "0.1.4"
 dependencies = [
  "orion_algo",
  "orion_data_structures",

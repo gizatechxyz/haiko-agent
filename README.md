@@ -13,14 +13,14 @@ Interact with the agent by sending JSON payloads via HTTP POST request:
 ```shell
 curl -X POST "https://haiko-agent-132737210721.europe-west1.run.app/agent_run" \
      -H "Content-Type: application/json" \
-     -d '{"dry_run": true, "preprocess": true, "postprocess": true, "preprocess_body": {"days": 7}}'
+     -d '{"dry_run": true, "preprocess": true, "postprocess": true, "preprocess_body": {"days": 7, "lookback": 14}}'
 ```
 
 **Parameters**:
 
 - `dry_run`: Runs in non-provable mode without generating proofs (boolean).
 - `preprocess` and `postprocess`: Should always be set to true.
-- `preprocess_body`: JSON object specifying the time window in days.
+- `preprocess_body`: JSON object specifying the time window in days and the lookback.
 
 **Response Structure**
 The response includes the trend result and a request ID:
@@ -29,10 +29,7 @@ The response includes the trend result and a request ID:
 {
   "results": {
       "trend": "Neutral",
-      "volatility": {
-        "standard": 0.005817181896418333,
-        "logarithmic": 0.005818642443045974
-      }
+      "vol_limit": 7907193
     },
   "request_id": "mock-or-actual-request-id"
 }
