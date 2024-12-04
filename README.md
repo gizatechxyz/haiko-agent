@@ -28,7 +28,7 @@ The response includes the trend result and a request ID:
 ```json
 {
   "results": {
-      "trend": "Neutral",
+      "trend": "Up",
       "volatility": {
         "standard": 0.005817181896418333,
         "logarithmic": 0.005818642443045974
