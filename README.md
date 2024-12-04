@@ -27,7 +27,13 @@ The response includes the trend result and a request ID:
 
 ```json
 {
-  "results": { "trend": "Up" },
+  "results": {
+      "trend": "Neutral",
+      "volatility": {
+        "standard": 0.005817181896418333,
+        "logarithmic": 0.005818642443045974
+      }
+    },
   "request_id": "mock-or-actual-request-id"
 }
 ```
@@ -132,23 +138,26 @@ If you want to develop or modify the project locally, you'll need to install the
 Then follow these steps:
 
 1. Create and activate a Python virtual environment:
-   bash
+   ```bash
    cd python
    python -m venv env
    source env/bin/activate
-   `
+   ```
 
 2. Install project dependencies:
 
-bash
+```bash
 pip install -r requirements.txt
+```
 
 3. Run the FastAPI application locally:
 
-bash
+```bash
 uvicorn src.main:app --host 0.0.0.0 --port 3000 --workers 4
+```
 
 4. To process inference, use the /run endpoint:
 
-bash
+```bash
 scarb agent-run --args '{"days": 7}' --preprocess --postprocess
+```

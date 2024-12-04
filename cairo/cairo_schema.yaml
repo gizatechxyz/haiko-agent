@@ -8,10 +8,19 @@ schemas:
             name: F64
   CairoResult:
     fields:
+      - analysis:
+          type: Struct
+          name: MarketAnalysis
+  MarketAnalysis:
+    fields:
       - trend:
-          type: Span
-          item_type:
-            type: Primitive
-            name: i64
+          type: Primitive
+          name: i64
+      - standard_volatility:
+          type: Primitive
+          name: F64
+      - log_volatility:
+          type: Primitive
+          name: F64
 cairo_input: CairoRequest
 cairo_output: CairoResult
