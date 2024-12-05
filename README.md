@@ -156,5 +156,5 @@ uvicorn src.main:app --host 0.0.0.0 --port 3000 --workers 4
 4. To process inference, use the /run endpoint:
 
 ```bash
-scarb agent-run --args '{"days": 7}' --preprocess --postprocess
+scarb agent-run --args '{"days": 7, "lookback": 14}' --preprocess --postprocess
 ```
