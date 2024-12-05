@@ -5,13 +5,18 @@ mod classification;
 use orion_numbers::F64;
 use trend::fit_trendlines_single;
 use classification::{trend_classification, Trend};
-use volatility::calculate_volatility;
+use volatility::{calculate_volatility, volatility_to_limit};
 
 #[derive(Drop, Serde)]
 struct MarketAnalysis {
     trend: Trend,
-    standard_volatility: F64,
-    log_volatility: F64
+    vol_limit: u32
+}
+
+#[derive(Serde, Drop)]
+struct CairoRequest {
+    prices: Span<F64>,
+    lookback: u32,
 }
 
 fn serializer<T, +Serde<T>, +Drop<T>>(data: T) -> Array<felt252> {
@@ -32,17 +37,16 @@ fn main(request: Array<felt252>) -> Array<felt252> {
     serializer(result)
 }
 
-fn logic(data: Span<F64>) -> MarketAnalysis {
-    let lookback = 14;
+fn logic(request: CairoRequest) -> MarketAnalysis {
 
     let mut support_slopes = array![];
     let mut resist_slopes = array![];
 
-    let mut i = lookback - 1;
+    let mut i = request.lookback - 1;
 
-    while i < data.len() {
+    while i < request.prices.len() {
         let ((support_coef, _), (resist_coef, _)) = fit_trendlines_single(
-            data.slice(i + 1 - lookback, lookback)
+            request.prices.slice(i + 1 - request.lookback, request.lookback)
         );
 
         support_slopes.append(support_coef);
@@ -53,13 +57,11 @@ fn logic(data: Span<F64>) -> MarketAnalysis {
 
     let trends = trend_classification(support_slopes.span(), resist_slopes.span());
 
-    // Calculate volatilities
-    let standard_vol = calculate_volatility(data, false);
-    let log_vol = calculate_volatility(data, true);
+    // Calculate volatility
+    let std_vol = calculate_volatility(request.prices, false);
 
-    MarketAnalysis {
-        trend: *trends[0], // Taking the most recent trend
-        standard_volatility: standard_vol,
-        log_volatility: log_vol
-    }
+    // Calculate volatility limit
+    let vol_limit = volatility_to_limit(std_vol);
+
+    MarketAnalysis { trend: *trends[0], vol_limit }
 }

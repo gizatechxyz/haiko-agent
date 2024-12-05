@@ -8,11 +8,12 @@ spec:
   template:
     metadata:
       annotations:
+        run.googleapis.com/timeout: "900"
         run.googleapis.com/execution-environment: gen2
         run.googleapis.com/container-dependencies: '{"agent-runner":["python-server"]}'
     spec:
       containers:
-        - image: "europe-west1-docker.pkg.dev/giza-platform-common/platform-images/orion-runner:0.3.2pra4395e2"
+        - image: "europe-west1-docker.pkg.dev/giza-platform-common/platform-images/orion-runner:0.3.2pr67b0cc6"
           name: agent-runner
           ports:
             - containerPort: 8080
@@ -26,7 +27,7 @@ spec:
           resources:
             limits:
               cpu: 1000m
-              memory: 512Mi
+              memory: 2Gi
         - image: "europe-west1-docker.pkg.dev/giza-platform-common/agents/%PYTHON_SERVER_IMAGE%"
           name: python-server
           resources:

@@ -10,6 +10,7 @@ app = FastAPI()
 
 class RunInput(BaseModel):
     days: int
+    lookback: int
 
 
 class CairoRunResult(BaseModel):
@@ -58,7 +59,7 @@ async def preprocess(request: RunInput):
             price_usdc = price_usd
             eth_usdc_prices.append(price_usdc)
 
-        return {"args": json.dumps({"prices": eth_usdc_prices})}
+        return {"args": json.dumps({"prices": eth_usdc_prices, "lookback": request.lookback})}
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -79,10 +80,7 @@ async def postprocess(request: CairoRunResult):
     # Insert custom postprocessing logic here
     analysis = {
         "trend": trend_num_to_string(analysis["trend"]),
-        "volatility": {
-            "standard": analysis["standard_volatility"],
-            "logarithmic": analysis["log_volatility"],
-        },
+        "vol_limit": analysis["vol_limit"],
     }
 
     return json.dumps({"results": analysis, "request_id": request.request_id})
