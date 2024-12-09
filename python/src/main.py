@@ -1,22 +1,19 @@
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import json
 import requests
 from datetime import datetime
 
 app = FastAPI()
 
-
 class RunInput(BaseModel):
-    days: int
-    lookback: int
-
+    days: int = Field(..., gt=0, description="Number of days, must be positive")
+    lookback: int = Field(..., gt=0, description="Lookback period, must be positive")
 
 class CairoRunResult(BaseModel):
     result: str
     request_id: Optional[str] = None
-
 
 def fetch_eth_prices(days: int):
     url = "https://api.coingecko.com/api/v3/coins/ethereum/market_chart"
@@ -35,7 +32,6 @@ def fetch_eth_prices(days: int):
     except ValueError as ve:
         raise HTTPException(status_code=500, detail=str(ve))
 
-
 @app.get("/healthcheck")
 def read_root():
     """
@@ -43,7 +39,6 @@ def read_root():
     Returns a simple JSON response indicating the API status.
     """
     return {"status": "OK"}
-
 
 # ========== Preprocessing ==========
 # This endpoint handles preprocessing of data before executing a Cairo program.
@@ -65,7 +60,6 @@ async def preprocess(request: RunInput):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
-
 # ========== Postprocessing ==========
 # This endpoint handles postprocessing of data after a Cairo program execution.
 # It allows further manipulation or interpretation of the Cairo output.
@@ -75,16 +69,29 @@ async def postprocess(request: CairoRunResult):
     Receives JSON data as the output of a Cairo main function, processes it,
     and returns the modified result.
     """
-    analysis = json.loads(request.result)["analysis"]
 
-    # Insert custom postprocessing logic here
-    analysis = {
-        "trend": trend_num_to_string(analysis["trend"]),
-        "vol_limit": analysis["vol_limit"],
-    }
-
-    return json.dumps({"results": analysis, "request_id": request.request_id})
-
+    try:
+        analysis = json.loads(request.result)["analysis"]
+        analysis = {
+            "trend": trend_num_to_string(analysis["trend"]),
+            "vol_limit": analysis["vol_limit"],
+        }
+        return json.dumps({"results": analysis, "request_id": request.request_id})
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid JSON format in result"
+        )
+    except KeyError:
+        raise HTTPException(
+            status_code=500,
+            detail="Missing required fields in result"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing result: {str(e)}"
+        )
 
 def trend_num_to_string(num: int):
     if num == 0:
@@ -96,9 +103,6 @@ def trend_num_to_string(num: int):
     else:
         raise ValueError("Unknown trend value")
 
-
 if __name__ == "__main__":
     import uvicorn
-
-    # Configures and runs the API server on host 0.0.0.0 at port 3000 with auto-reload enabled.
     uvicorn.run("main:app", host="0.0.0.0", port=3000, reload=True)
