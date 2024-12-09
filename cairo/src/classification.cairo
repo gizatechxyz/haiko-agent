@@ -96,4 +96,61 @@ mod tests {
         assert(*category.at(12) == Trend::Downtrend, 'wrong trend');
         assert(*category.at(13) == Trend::Downtrend, 'wrong trend');
     }
+
+    #[test]
+    fn test_trend_classification_edge_cases() {
+        // Test case with very small slope differences
+        let support_slopes = array![
+            F64 { d: 42949 },  // 0.00001
+            F64 { d: -42949 }  // -0.00001
+        ].span();
+        
+        let resist_slopes = array![
+            F64 { d: 42950 },  // 0.00001
+            F64 { d: -42950 }  // -0.00001
+        ].span();
+
+        let trends = trend_classification(support_slopes, resist_slopes);
+        assert(*trends[0] == Trend::Uptrend, 'should be uptrend');
+        assert(*trends[1] == Trend::Downtrend, 'should be downtrend');
+    }
+
+    #[test]
+    fn test_trend_classification_neutral_conditions() {
+        // Test cases where trends should be neutral
+        let support_slopes = array![
+            F64 { d: 429496730 },   // 0.1
+            F64 { d: -429496730 },  // -0.1
+            F64 { d: 42949673 }     // 0.01
+        ].span();
+        
+        let resist_slopes = array![
+            F64 { d: -429496730 },  // -0.1
+            F64 { d: 429496730 },   // 0.1
+            F64 { d: -42949673 }    // -0.01
+        ].span();
+
+        let trends = trend_classification(support_slopes, resist_slopes);
+        assert(*trends[0] == Trend::Neutral, 'should be neutral');
+        assert(*trends[1] == Trend::Neutral, 'should be neutral');
+        assert(*trends[2] == Trend::Neutral, 'should be neutral');
+    }
+
+    #[test]
+    fn test_trend_classification_strong_trends() {
+        // Test cases with strong trend signals
+        let support_slopes = array![
+            F64 { d: 4294967296 },  // 1.0
+            F64 { d: -4294967296 }  // -1.0
+        ].span();
+        
+        let resist_slopes = array![
+            F64 { d: 4294967296 },  // 1.0
+            F64 { d: -4294967296 }  // -1.0
+        ].span();
+
+        let trends = trend_classification(support_slopes, resist_slopes);
+        assert(*trends[0] == Trend::Uptrend, 'should be strong uptrend');
+        assert(*trends[1] == Trend::Downtrend, 'should be strong downtrend');
+    }
 }
